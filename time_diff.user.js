@@ -3,7 +3,7 @@
 // @namespace    http://boc.ink/
 // @version      0.1
 // @description  try to take over the world!
-// @author       You
+// @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
 // @match        *://vip.win0168.com/changeDetail/handicap.aspx*
 // @require      https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js
@@ -41,6 +41,7 @@
        var date_sel = oddsTable + ":nth-child(" +i +")" + " td:nth-child(" + date_index + ")";
        var state_str = $(oddsTable + ":nth-child(" +i +")" + " td.hg_blue").text();
        var home_sel = oddsTable + ":nth-child(" +i +")" + " td:nth-child(" + (date_index - 3) + ")";
+       var pre_home_sel = oddsTable + ":nth-child(" + (i - 1) +")" + " td:nth-child(" + (date_index - 3) + ")";
         if (state_str == '滚') {
             $(oddsTable + ":nth-child(" +i +")").hide();
             continue
@@ -53,7 +54,7 @@
             diff_begin = diff_begin + "[" + diffMinutes(date_odd,last_date) + "]";
         }
         if (last_home != undefined) {
-           $( oddsTable + ":nth-child(" + (i - 1) +")" + " td:nth-child(" + (date_index - 3) + ")").find('b').text($(home_sel).text() + ' | ' + diffOdds(home_odd,last_home));
+           $(pre_home_sel).find('b').text($(pre_home_sel).text() + ' | ' + diffOdds(home_odd,last_home));
         }
        last_date = date_odd;
        last_home = home_odd;
