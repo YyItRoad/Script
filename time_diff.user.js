@@ -53,7 +53,7 @@
             diff_begin = diff_begin + "[" + diffMinutes(date_odd,last_date) + "]";
         }
         if (last_home != undefined) {
-           $(home_sel).find('b').text($(home_sel).text() + ' | ' + diffOdds(home_odd,last_home));
+           $( oddsTable + ":nth-child(" + (i - 1) +")" + " td:nth-child(" + (date_index - 3) + ")").find('b').text($(home_sel).text() + ' | ' + diffOdds(home_odd,last_home));
         }
        last_date = date_odd;
        last_home = home_odd;
