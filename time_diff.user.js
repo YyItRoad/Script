@@ -3,7 +3,7 @@
 // @namespace    http://boc.ink/
 // @version      0.1
 // @description  try to take over the world!
-// @author       YY
+// @author       You
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
 // @match        *://vip.win0168.com/changeDetail/handicap.aspx*
 // @require      https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js
