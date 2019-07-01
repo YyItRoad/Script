@@ -3,7 +3,7 @@
 // @namespace    http://boc.ink/
 // @version      0.1
 // @description  try to take over the world!
-// @author       You
+// @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
 // @match        *://vip.win0168.com/changeDetail/handicap.aspx*
 // @require      https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js
@@ -28,7 +28,7 @@
         return (parseInt(mm/60) + (mm%60/60)).toFixed(1) + 'h';
     }
     function diffOdds(a,b) {
-        return parseInt(b * 100 - a * 100);
+        return (b * 100 - a * 100).toFixed(0);
     }
 
     var oddsTable = "table[cellspacing='1'] tr";
@@ -36,12 +36,14 @@
     var date_index = $(oddsTable + ":nth-child(1) td").length -1;
     $(oddsTable + ":nth-child(1)" + " td:nth-child(" + date_index + ")").attr('width',160);
 
-    var last_date,last_home;
+    var last_date,last_home,last_away;
     for(var i = 2; i<= lists.length;i++) {
        var date_sel = oddsTable + ":nth-child(" +i +")" + " td:nth-child(" + date_index + ")";
        var state_str = $(oddsTable + ":nth-child(" +i +")" + " td.hg_blue").text();
        var home_sel = oddsTable + ":nth-child(" +i +")" + " td:nth-child(" + (date_index - 3) + ")";
        var pre_home_sel = oddsTable + ":nth-child(" + (i - 1) +")" + " td:nth-child(" + (date_index - 3) + ")";
+       var away_sel = oddsTable + ":nth-child(" +i +")" + " td:nth-child(" + (date_index - 1) + ")";
+       var pre_away_sel = oddsTable + ":nth-child(" + (i - 1) +")" + " td:nth-child(" + (date_index - 1) + ")";
         if (state_str == '滚') {
             $(oddsTable + ":nth-child(" +i +")").hide();
             continue
@@ -49,15 +51,18 @@
        var date_str = $(date_sel).text();
        var date_odd = textToDate(date_str);
        var home_odd = $(home_sel).text();
+       var away_odd = $(away_sel).text();
        var diff_begin = formatHour(diffMinutes(date_odd));
         if (last_date) {
             diff_begin = diff_begin + "[" + diffMinutes(date_odd,last_date) + "]";
         }
         if (last_home != undefined) {
            $(pre_home_sel).find('b').text($(pre_home_sel).text() + ' | ' + diffOdds(home_odd,last_home));
+           $(pre_away_sel).find('b').text($(pre_away_sel).text() + ' | ' + diffOdds(away_odd,last_away));
         }
        last_date = date_odd;
        last_home = home_odd;
+       last_away = away_odd;
        $(date_sel).text(date_str +' | '+ diff_begin);
     }
 })();
