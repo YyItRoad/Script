@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         time_diff
 // @namespace    http://boc.ink/
-// @version      0.1
+// @version      0.2
 // @description  try to take over the world!
 // @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
 // @match        *://vip.win0168.com/changeDetail/handicap.aspx*
 // @match        *://vip.win0168.com/AsianOdds_n.aspx*
 // @match        *://vip.win007.com/AsianOdds_n.aspx*
+// @match        *://vip.win0168.com/1x2/OddsHistory.aspx*
 // @require      https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js
 // @grant        none
@@ -94,7 +95,6 @@
                 last_array.push(trs[i]);
             }
         }
-        let thtml = $('#odds tr:nth-child(2)');
         let all_companies = company_names.concat(diffArray(Object.keys(companies),company_names));
         let first_td;
         for (let j =0;j < all_companies.length; j++){
@@ -107,10 +107,24 @@
               }
             }
         }
-        thtml.after(first_td);
+        $('#odds tr:nth-child(2)').after(first_td);
     }
 
+    function handleHistory() {
+        console.log('handleHistory');
+        var tds = $('#odds > table tr td.font12');
+        let last_date;
+        for (var i = 0;i < tds.length; i++) {
+          var date =textToDate($(tds[i]).text().replace('(初盘)',''));
+            if (last_date) {
+               $(tds[i-1]).text($(tds[i-1]).text() + " [" + diffMinutes(date,last_date)+']');
+            }
+            last_date = date;
+        }
+
+    }
     if (location.pathname.startsWith('/changeDetail')) handleOdds();
     if (location.pathname.startsWith('/AsianOdds_n')) handleCompany();
+    if (location.pathname.indexOf('OddsHistory')>0) handleHistory();
 
 })();
