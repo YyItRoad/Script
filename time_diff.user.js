@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         time_diff
 // @namespace    http://boc.ink/
-// @version      0.3
+// @version      0.3.1
 // @description  try to take over the world!
 // @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
@@ -205,7 +205,7 @@
                     let all_away = sheet.all_shifts_away;
                     let all_handicap = sheet.all_shifts_handicap;
                     let home, away, handicap, date;
-                    for (let index = all_time.length -1; index > 0 ; index--) {
+                    for (let index = all_time.length -1; index >= 0 ; index--) {
                         let ihome = all_home[index];
                         let iaway = all_away[index];
                         let ihandicap = all_handicap[index];
