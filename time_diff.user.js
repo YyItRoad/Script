@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         time_diff
 // @namespace    http://boc.ink/
-// @version      0.3.1
+// @version      0.3.2
 // @description  try to take over the world!
 // @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
@@ -19,24 +19,24 @@
     console.log('时间差插件!!!', location.host, location.pathname);
     var begin_time;
     //转化为日期对象
-    function textToDate(text) {
+    function textToDate (text) {
         return moment(text, "MM-DD HH:mm");
     }
-    function diffMinutes(m, b) {
+    function diffMinutes (m, b) {
         return (b ? b : begin_time).diff(m, 'minutes');
     }
-    function formatHour(mm) {
+    function formatHour (mm) {
         if (mm < 60) return mm + 'm';
         return (parseInt(mm / 60) + (mm % 60 / 60)).toFixed(1) + 'h';
     }
-    function diffOdds(a, b) {
+    function diffOdds (a, b) {
         return (b * 100 - a * 100).toFixed(0);
     }
-    function diffArray(arr1, arr2) {
+    function diffArray (arr1, arr2) {
         return arr1.concat(arr2).filter(item => !arr1.includes(item) || !arr2.includes(item));
     }
 
-    function handleOdds() {
+    function handleOdds () {
         console.log('handleOdds');
         begin_time = textToDate($('table tr td[bgcolor="red"]').parents('tr>td+td+td').parent().first().find('td').html());
         console.log('begin_time:', begin_time.format());
@@ -78,7 +78,7 @@
 
     const company_names = ['澳门', '易胜博', '利记', '明陞', '12bet', 'Crown', '金宝博', '盈禾', '韦德', '平博', 'Bet365', '10BET', '18Bet'];
 
-    function handleCompany() {
+    function handleCompany () {
         console.log('handleCompany');
         var companies = {};
         var trs = $('#odds tr');
@@ -115,7 +115,7 @@
         }
     }
 
-    function handleHistory() {
+    function handleHistory () {
         console.log('handleHistory');
         var tds = $('#odds > table tr td.font12');
         let last_date;
@@ -128,25 +128,19 @@
         }
     }
 
-    function getQueryString(name) {
+    function getQueryString (name) {
         var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
         var r = window.location.search.substr(1).match(reg);
         if (r != null) return unescape(r[2]); return null;
     }
 
-    function showChart(key) {
+    function showChart (key) {
 
-        function heredoc(fn) {
+        function heredoc (fn) {
             return fn.toString().split('\n').slice(1, -1).join('\n') + '\n'
         }
-        var content = heredoc(function () {/*
-        <div id='chart' style="width:100%;height:500px;padding-top:10px">
-
-        </div>
-        */});
 
         $.getScript('http://raw.githack.com/YyItRoad/Script/master/echarts.min.js', getData);
-
 
         const need_companies = [1, 3, 12, 17, 24, 23, 31, 35];
         const chart_color = ['#c23531', '#2f4554', '#61a0a8', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3'];// ['#FF0000', '#FFFF00', '#008B8B', '#7FFFD4', '#FFFAFA', '#0000FF', '#8A2BE2', '#A52A2A', '#000000', '#7FFF00', '#80000040', '#FF7F50', '#6495ED', '#DC143C', '#00FFFF', '#B8860B', '#A9A9A9', '#006400', '#FFDAB9', '#8B008B', '#FF00FF', '#483D8B', '#2F4F4F', '#D2B48C'];
@@ -168,8 +162,17 @@
             "47": "平博"
         }
         var myChart;
+        var game;
+        var lineType = localStorage.getItem('lineType') || '上盘';
+        var tooltip_data = {};
+        var legend_selected = JSON.parse(localStorage.getItem('legend_selected'));
+        var content = heredoc(function () {/*
+            <div id='chart' style="width:100%;height:500px;padding-top:10px">
+            </div>
+            <button id='lineType' style="position:absolute;top: 10px;left:10px;"></button>
+            */});
 
-        function getData() {
+        function getData () {
             $.ajax({
                 type: "get",
                 url: `https://boc.ink/v1/game/targets?key=${key}&fun=detail&id=${getQueryString('id')}`,
@@ -178,34 +181,37 @@
                     if (res.data) {
                         $('#MiddleAd').height(525);
                         $('#MiddleAd').append(content);
+                        $('#MiddleAd').css('position', 'relative');
+                        myChart = echarts.init(document.getElementById('chart'));
+                        myChart.on('legendselectchanged', function (params) {
+                            localStorage.setItem('legend_selected', JSON.stringify(params.selected));
+                        });
                         loadChart(res.data);
+                        $('#lineType').text(lineType);
+                        $('#lineType').click(function () {
+                            lineType = lineType === '上盘' ? '主队' : '上盘';
+                            $(this).text(lineType);
+                            localStorage.setItem('lineType', lineType);
+                            loadChart(game);
+                        });
                     }
                 }
             });
         }
 
-        var tooltip_data = {};
-        var game;
-        var legend_selected = JSON.parse(localStorage.getItem('legend_selected'));
-
-        function loadChart(all_datas) {
-            myChart = echarts.init(document.getElementById('chart'));
-            myChart.on('legendselectchanged', function (params) {
-                localStorage.setItem('legend_selected', JSON.stringify(params.selected));
-            });
-
+        function loadChart (all_datas) {
             game = all_datas;
-            function getCutOdds(time) {
+            function getCutOdds (time) {
                 if (tooltip_data[time]) {
                     return tooltip_data[time];
-                  }
-                function getOdds(sheet) {
+                }
+                function getOdds (sheet) {
                     let all_time = sheet.all_shifts_time;
                     let all_home = sheet.all_shifts_home;
                     let all_away = sheet.all_shifts_away;
                     let all_handicap = sheet.all_shifts_handicap;
                     let home, away, handicap, date;
-                    for (let index = all_time.length -1; index >= 0 ; index--) {
+                    for (let index = all_time.length - 1; index >= 0; index--) {
                         let ihome = all_home[index];
                         let iaway = all_away[index];
                         let ihandicap = all_handicap[index];
@@ -219,7 +225,7 @@
                         handicap = ihandicap;
                         date = idate;
                     }
-                    return home != undefined && { home, away, handicap, date, odd: sheet.superior == 1 ? home : away }
+                    return home != undefined && { home, away, handicap, date, odd: (sheet.superior == 1 || lineType == '主队') ? home : away }
                 }
 
                 let odds = [];
@@ -228,7 +234,7 @@
                     if (need_companies.indexOf(sheet.company_id) >= 0) {
                         let odd = getOdds(sheet);
                         if (odd) {
-                            let dom = `<span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background-color:${chart_color[need_companies.indexOf(parseInt(sheet.company_id))]};"></span> ${sheet.company} [${odd.handicap}]${odd.odd}/${sheet.superior == -1 ? odd.home : odd.away}`
+                            let dom = `<span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background-color:${chart_color[need_companies.indexOf(parseInt(sheet.company_id))]};"></span> ${sheet.company} [${odd.handicap}]${odd.odd}/${(sheet.superior == 1 || lineType == '主队') ? odd.away : odd.home}`
                             odds.push(dom);
                         }
                     }
@@ -237,7 +243,7 @@
                 return odds;
             }
 
-            function dateCompare(date1, date2, toType = 'ss') {
+            function dateCompare (date1, date2, toType = 'ss') {
                 if (typeof date1 == "string") {
                     date1 = new Date(date1);
                 }
@@ -253,10 +259,10 @@
                 return compare;
             }
 
-            function handlerData(company) {
+            function handlerData (company) {
                 let datas = [];
                 let all_time = company.all_shifts_time;
-                let all_odds = company.superior == 1 ? company.all_shifts_home : company.all_shifts_away;
+                let all_odds = (company.superior == 1 || lineType == '主队') ? company.all_shifts_home : company.all_shifts_away;
                 for (let index = 0; index < company.all_shifts_time.length; index++) {
                     let home = all_odds[index];
                     let date = new Date(all_time[index]);
