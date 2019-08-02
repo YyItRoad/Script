@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         time_diff
 // @namespace    http://boc.ink/
-// @version      0.3.2
+// @version      0.3.3
 // @description  try to take over the world!
 // @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
@@ -162,26 +162,29 @@
             "47": "平博"
         }
         var myChart;
-        var game;
+        var gameData;
         var lineType = localStorage.getItem('lineType') || '上盘';
         var tooltip_data = {};
         var legend_selected = JSON.parse(localStorage.getItem('legend_selected'));
         var content = heredoc(function () {/*
-            <div id='chart' style="width:100%;height:500px;padding-top:10px">
-            </div>
+            <div id='chart' style="width:100%;padding-top:10px"></div>
+            <div id='euchart' style="width:100%;padding-top:10px"></div>
             <button id='lineType' style="position:absolute;top: 10px;left:10px;"></button>
             */});
+        $('#MiddleAd').height('100%');
+        $('#MiddleAd').css('padding', '20px 0');
+        $('#MiddleAd').append(content);
+        $('#MiddleAd').css('position', 'relative');
 
         function getData () {
+            showEuChart();
             $.ajax({
                 type: "get",
                 url: `https://boc.ink/v1/game/targets?key=${key}&fun=detail&id=${getQueryString('id')}`,
                 success: function (res) {
                     console.log(res);
                     if (res.data) {
-                        $('#MiddleAd').height(525);
-                        $('#MiddleAd').append(content);
-                        $('#MiddleAd').css('position', 'relative');
+                        $('#chart').height('500px');
                         myChart = echarts.init(document.getElementById('chart'));
                         myChart.on('legendselectchanged', function (params) {
                             localStorage.setItem('legend_selected', JSON.stringify(params.selected));
@@ -192,7 +195,7 @@
                             lineType = lineType === '上盘' ? '主队' : '上盘';
                             $(this).text(lineType);
                             localStorage.setItem('lineType', lineType);
-                            loadChart(game);
+                            loadChart(gameData);
                         });
                     }
                 }
@@ -200,7 +203,7 @@
         }
 
         function loadChart (all_datas) {
-            game = all_datas;
+            gameData = all_datas;
             function getCutOdds (time) {
                 if (tooltip_data[time]) {
                     return tooltip_data[time];
@@ -311,7 +314,7 @@
                     axisPointer: {
                         label: {
                             formatter: function (params) {
-                                return moment(params.value).format('MM-DD HH:mm') + '【' + dateCompare(game.begin_time, new Date(params.value), 'mm') + '】';
+                                return moment(params.value).format('MM-DD HH:mm') + '【' + dateCompare(gameData.begin_time, new Date(params.value), 'mm') + '】';
                             }
                         }
                     }
@@ -343,6 +346,114 @@
             };
             myChart.setOption(option);
         }
+    }
+
+    function showEuChart () {
+
+        var euChart;
+        var hsDetail = new Hashtable();
+        var games = new Hashtable();
+
+        $.getScript(`http://1x2.nowscore.com/${getQueryString('id')}.js`, function (res) {
+            if (typeof (gameDetail) != "undefined") {
+                $('#euchart').height('500px');
+
+                euChart = echarts.init(document.getElementById('euchart'));
+
+                for (let i = 0; i < game.length; i++) {
+                    var d_data = game[i].split('|');
+                    var companyId = parseInt(d_data[0]);
+                    if (!games.contains(companyId)) {
+                        games.add(companyId, d_data);
+                    }
+                }
+                for (var i = 0; i < gameDetail.length; i++) {
+                    var g_data = gameDetail[i].split('^');
+                    var oddsID = parseInt(g_data[0]);
+                    if (!hsDetail.contains(oddsID)) {
+                        hsDetail.add(oddsID, g_data[1]);
+                    }
+                }
+
+                var odds = games.items(90);
+                var oddsDetail = hsDetail.items(odds[1]);
+                loadChart(oddsDetail.split(';'));
+            }
+        });
+
+        function loadChart (od) {
+
+            function handlerData () {
+                let datas = [];
+                for (let index = 0; index < od.length; index++) {
+                    const odd = od[index].split('|');
+                    if (odd.length > 5) {
+                        var date = new Date(season + '-' + odd[3]);
+                        datas.push([date, odd[0]]);
+                    }
+                }
+                return datas;
+            }
+
+            var series = [];
+            var legend = [];
+
+            legend.push('易胜博');
+            series.push({
+                name: '易胜博',
+                type: 'line',
+                showAllSymbol: true,   // 显示symbol
+                data: handlerData()
+            })
+
+            var option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross'
+                    }
+                },
+                legend: {
+                    data: legend,
+                },
+                xAxis:
+                {
+                    type: 'time',
+                    axisPointer: {
+                        // label: {
+                        // formatter: function (params) {
+                        // return moment(params.value).format('MM-DD HH:mm') + '【' + dateCompare(game.begin_time, new Date(params.value), 'mm') + '】';
+                        // }
+                        // }
+                    }
+                },
+                dataZoom: [{
+                    type: 'inside',
+                    filterMode: 'none',
+                }, {
+                    filterMode: 'none',
+                    handleSize: '100%',
+                    handleStyle: {
+                        color: '#fff',
+                        shadowBlur: 3,
+                        shadowColor: 'rgba(0, 0, 0, 0.6)',
+                        shadowOffsetX: 2,
+                        shadowOffsetY: 2
+                    }
+                }],
+                yAxis: [{
+                    type: 'value',
+                    scale: true,
+                }],
+                series: series,
+                axisPointer: {
+                    label: {
+                        backgroundColor: '#666'
+                    }
+                },
+            };
+            euChart.setOption(option);
+        }
 
     }
 
@@ -351,3 +462,29 @@
     if (location.pathname.indexOf('OddsHistory') > 0) handleHistory();
 
 })();
+
+function Hashtable () {
+    this._hash = new Object();
+    this.add = function (key, value) {
+        if (typeof (key) != "undefined") {
+            this._hash[key] = typeof (value) == "undefined" ? null : value;
+            return true;
+        }
+        else
+            return false;
+    }
+    this.remove = function (key) { delete this._hash[key]; }
+    this.keys = function () {
+        var keys = new Array();
+        for (var key in this._hash) {
+            keys.push(key);
+        }
+        return keys;
+    }
+    this.count = function () { var i = 0; for (var k in this._hash) { i++; } return i; }
+    this.items = function (key) { return this._hash[key]; }
+    this.contains = function (key) {
+        return typeof (this._hash[key]) != "undefined";
+    }
+    this.clear = function () { for (var k in this._hash) { delete this._hash[k]; } }
+}
