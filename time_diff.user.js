@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         time_diff
 // @namespace    http://boc.ink/
-// @version      0.4.1
+// @version      0.4.2
 // @description  try to take over the world!
 // @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
@@ -476,6 +476,7 @@ Odds.prototype.getOdd = function (home) {
                     begin_time = textToDate(last_date.replace('<br>', ' ')).toDate();
                     break;
                 };
+                last_date = date;
                 for (let j = 1; j <= cols; j++) {
                     if (needCompanyIndex.indexOf(j) < 0) continue;
                     var td = $(html).find(`tr:nth-child(${i}) td:nth-child(${j})`)
