@@ -378,7 +378,7 @@ Odds.prototype.getOdd = function (home) {
                         axisPointer: {
                             label: {
                                 formatter: function (params) {
-                                    return moment(params.value).format('MM-DD HH:mm');
+                                    return moment(params.value).format('MM-DD HH:mm') + '【' + dateCompare(begin_time, new Date(params.value), 'mm') + '】';
                                 }
                             }
                         }
@@ -465,11 +465,17 @@ Odds.prototype.getOdd = function (home) {
                 let c_index = allNames.indexOf(company) + 1;
                 if (c_index > 0) needCompanyIndex.push(c_index);
             }
-            console.log(needCompanyIndex);
+            let last_date;
             for (let i = tb.length; i > 0; i--) {
                 let date = $(html).find(`tr:nth-child(${i}) td:nth-child(14)`).html();
                 let score = $(html).find(`tr:nth-child(${i}) td:nth-child(13)`).text();
-                if (score.length > 0) break;
+                if (score.length > 0) {
+                    if (score.indexOf('-') > 0) {
+                        last_date = date;
+                    }
+                    begin_time = textToDate(last_date.replace('<br>', ' ')).toDate();
+                    break;
+                };
                 for (let j = 1; j <= cols; j++) {
                     if (needCompanyIndex.indexOf(j) < 0) continue;
                     var td = $(html).find(`tr:nth-child(${i}) td:nth-child(${j})`)
@@ -479,7 +485,6 @@ Odds.prototype.getOdd = function (home) {
                             handleOdds(j, d);
                     }
                 }
-                console.log(`读取${i}`);
             }
             callback(allNames, all_odds);
         }
