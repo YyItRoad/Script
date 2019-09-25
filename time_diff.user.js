@@ -13,6 +13,88 @@
 // @require      https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js
 // @grant        none
 // ==/UserScript==
+var now_year = new Date().getFullYear();
+var now_month = new Date().getMonth() + 1;
+let needCompany = ['澳门', '易胜', '利记'];
+function handicapToPoints (handicap) {
+    let opposite = false;
+    if (handicap.indexOf('受让') == 0) {
+        opposite = true;
+        handicap = handicap.replace('受让', '');
+    }
+    let point = 0;
+    switch (handicap) {
+        case '平手': point = 0; break;
+        case '平手/半球': point = 0.25; break;
+        case '平/半': point = 0.25; break;
+        case '半球': point = 0.5; break;
+        case '半球/一球': point = 0.75; break;
+        case '半/一': point = 0.75; break;
+        case '一球': point = 1; break;
+        case '一球/球半': point = 1.25; break;
+        case '一/球半': point = 1.25; break;
+        case '球半': point = 1.5; break;
+        case '球半/两球': point = 1.75; break;
+        case '球半/两': point = 1.75; break;
+        case '两球': point = 2; break;
+        case '两球/两球半': point = 2.25; break;
+        case '两/两球半': point = 2.25; break;
+        case '两球半': point = 2.5; break;
+        case '两球半/三球': point = 2.75; break;
+        case '两球半/三': point = 2.75; break;
+        case '三球': point = 3; break;
+        case '三球/三球半': point = 3.25; break;
+        case '三/三球半': point = 3.25; break;
+        case '三球半': point = 3.5; break;
+        case '三球半/四球': point = 3.75; break;
+        case '三球半/四': point = 3.75; break;
+        case '四球': point = 4; break;
+        case '四球/四球半': point = 4.25; break;
+        case '四/四球半': point = 4.25; break;
+        case '四球半': point = 4.5; break;
+        case '四球半/五球': point = 4.75; break;
+        case '四球半/五': point = 4.75; break;
+        case '五球': point = 5; break;
+        case '五球/五球半': point = 5.25; break;
+        case '五/五球半': point = 5.25; break;
+        case '五球半': point = 5.5; break;
+        case '五球半/六球': point = 5.75; break;
+        case '五球半/六': point = 5.75; break;
+        case '六球': point = 6; break;
+        case '六球/六球半': point = 6.25; break;
+        case '六/六球半': point = 6.25; break;
+        case '六球半': point = 6.5; break;
+        default: point == 100;
+    }
+    if (opposite) {
+        point = -point;
+    }
+    return point;
+}
+
+function getTime (date) {
+    let month = date.split('-')[0];
+    let year = now_year;
+    if (now_month == 12 && month <= 3) {
+        year++;
+    }
+    return new Date(`${year}-${date}`);
+}
+var Odds = function ({ home, away, date, handicap, state }) {
+    this.home = home;
+    this.away = away;
+    this.date = getTime(date);
+    this.handicap = handicapToPoints(handicap);
+    this.state = state;
+}
+
+Odds.prototype.getData = function (home) {
+    return [this.date, this.home];
+};
+
+Odds.prototype.getOdd = function (home) {
+    return this.home;
+};
 
 ; (function () {
     'use strict';
@@ -34,6 +116,22 @@
     }
     function diffArray (arr1, arr2) {
         return arr1.concat(arr2).filter(item => !arr1.includes(item) || !arr2.includes(item));
+    }
+
+    function dateCompare (date1, date2, toType = 'ss') {
+        if (typeof date1 == "string") {
+            date1 = new Date(date1);
+        }
+        if (typeof date2 == "string") {
+            date2 = new Date(date2);
+        }
+        let dert = Math.abs(date1.getTime() - date2.getTime());
+        let ss = Math.floor(dert / 1000);
+        let compare = ss;
+        if (toType === 'mm') {
+            compare = ss / 60;
+        }
+        return compare;
     }
 
     function handleOdds () {
@@ -140,10 +238,10 @@
             return fn.toString().split('\n').slice(1, -1).join('\n') + '\n'
         }
 
-        $.getScript('http://raw.githack.com/YyItRoad/Script/master/echarts.min.js', getData);
+        $.getScript('http://raw.githack.com/YyItRoad/Script/master/echarts.min.js', showAllChart);
 
         const need_companies = [1, 3, 12, 17, 24, 23, 31, 35];
-        const chart_color = ['#c23531', '#2f4554', '#61a0a8', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3'];// ['#FF0000', '#FFFF00', '#008B8B', '#7FFFD4', '#FFFAFA', '#0000FF', '#8A2BE2', '#A52A2A', '#000000', '#7FFF00', '#80000040', '#FF7F50', '#6495ED', '#DC143C', '#00FFFF', '#B8860B', '#A9A9A9', '#006400', '#FFDAB9', '#8B008B', '#FF00FF', '#483D8B', '#2F4F4F', '#D2B48C'];
+        const chart_color = ['#c23531', '#2f4554', '#61a0a8', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3'];
         const company_ids = {
             "1": "澳门",
             "2": "ManbetX",
@@ -167,7 +265,7 @@
         var tooltip_data = {};
         var legend_selected = JSON.parse(localStorage.getItem('legend_selected'));
         var content = heredoc(function () {/*
-            <div id='chart' style="width:100%;padding-top:10px"></div>
+            <div id='oddsChart' style="width:100%;padding-top:10px"></div>
             <div id='euchart' style="width:100%;padding-top:10px"></div>
             <button id='lineType' style="position:absolute;top: 10px;left:10px;"></button>
             */});
@@ -175,6 +273,217 @@
         $('#MiddleAd').css('padding', '20px 0');
         $('#MiddleAd').append(content);
         $('#MiddleAd').css('position', 'relative');
+
+        function showAllChart () {
+            console.log('showAllChart');
+            //showEuChart();
+            getOddsData(showOddsChart);
+        }
+
+        function showOddsChart (allNames, all_odds) {
+            console.log('showOddsChart', allNames);
+            var odds_legend_selected = JSON.parse(localStorage.getItem('odds_legend_selected'));
+            var tooltip_datas = {};
+            var oddsChart;
+
+            $('#oddsChart').height('500px');
+            oddsChart = echarts.init(document.getElementById('oddsChart'));
+            oddsChart.on('legendselectchanged', function (params) {
+                odds_legend_selected = params.selected;
+                localStorage.setItem('odds_legend_selected', JSON.stringify(params.selected));
+            });
+
+            function loadOddsChart () {
+
+                function getCutOdds (time) {
+                    let allCutOdds;
+                    if (tooltip_datas[time]) {
+                        allCutOdds = tooltip_datas[time];
+                    } else {
+                        function getOdds (sheets = []) {
+                            let last_sheet;
+                            for (let i = 0; i < sheets.length; i++) {
+                                const sheet = sheets[i];
+                                let dert_time = time - sheet.date.getTime()
+                                if (dert_time < 0) {
+                                    break;
+                                }
+                                last_sheet = sheet;
+                            }
+                            return last_sheet;
+                        }
+
+                        allCutOdds = {};
+                        for (let index = 0; index < allNames.length; index++) {
+                            const c_name = allNames[index];
+                            let odd = getOdds(all_odds[c_name]);
+                            if (odd) {
+                                allCutOdds[c_name] = odd;
+                            }
+                        }
+                        tooltip_datas[time] = allCutOdds;
+                    }
+
+                    let cutOdds = [];
+                    for (let index = 0; index < allNames.length; index++) {
+                        const c_name = allNames[index];
+                        let c_odds = allCutOdds[c_name];
+                        let selected = odds_legend_selected == null || odds_legend_selected[c_name];
+                        if (c_odds && selected) {
+                            cutOdds.push(`${c_name}: [${c_odds.handicap}]${c_odds.getOdd()}`);
+                        }
+                    }
+                    return cutOdds;
+                }
+
+                var legend = [];
+                var series = [];
+
+                for (let i = 0; i < needCompany.length; i++) {
+                    const name = needCompany[i];
+                    legend.push(name);
+                    let c_odds = all_odds[name] || [];
+
+                    let c_data = [];
+                    for (let j = 0; j < c_odds.length; j++) {
+                        const c_odd = c_odds[j];
+                        c_data.push(c_odd.getData());
+                    }
+                    series.push({
+                        type: 'line',
+                        data: c_data,
+                        name,
+                    });
+                }
+
+                var option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'cross'
+                        },
+                        formatter: function (params) {
+                            let series = params[0];
+                            let data = getCutOdds(series.axisValue);
+                            return [series.axisValueLabel, ...data].join("<br/>");
+                        }
+                    },
+                    legend: {
+                        data: legend,
+                        selected: odds_legend_selected
+                    },
+                    xAxis:
+                    {
+                        type: 'time',
+                        axisPointer: {
+                            label: {
+                                formatter: function (params) {
+                                    return moment(params.value).format('MM-DD HH:mm');
+                                }
+                            }
+                        }
+                    },
+                    dataZoom: [{
+                        type: 'inside',
+                        filterMode: 'none',
+                    }, {
+                        filterMode: 'none',
+                        handleSize: '100%',
+                        handleStyle: {
+                            color: '#fff',
+                            shadowBlur: 3,
+                            shadowColor: 'rgba(0, 0, 0, 0.6)',
+                            shadowOffsetX: 2,
+                            shadowOffsetY: 2
+                        }
+                    }],
+                    yAxis: [{
+                        type: 'value',
+                        scale: true,
+                    }],
+                    series: series,
+                    axisPointer: {
+                        label: {
+                            backgroundColor: '#666'
+                        }
+                    },
+                };
+                oddsChart.setOption(option);
+            }
+
+            loadOddsChart();
+        }
+
+        function getOddsData (callback) {
+            console.log('getOddsData');
+            var all_odds = {};
+            var allNames;
+
+            let htmlText = $('#oddsDetail')[0].outerHTML;
+
+            let html = $.parseHTML(htmlText);
+            var tb = $(html).find('tr');
+            var cols = $(html).find('tr:nth-child(1) td').length;
+
+            function handleOdds (index, odds) {
+                let name = allNames[index - 1];
+                if (name) {
+                    let os = all_odds[name] || [];
+                    os.push(odds);
+                    all_odds[name] = os;
+                }
+            }
+
+            function getDetail (element, score, date) {
+                let datas = $(element).html().split('<br>');
+                if (datas.length > 0) {
+                    let f3 = $(element).find('span.f3').text();
+                    let f2 = $(element).find('span.f2').text();
+                    let h = datas[0];
+                    if (f3.length > 0)
+                        return new Odds({ home: f3, away: f2, date: date.replace('<br>', ' '), handicap: h, state: score.length > 0 });
+                }
+            }
+
+            function getCompanyNames () {
+                let names = []
+                for (let j = 1; j <= cols; j++) {
+                    var name = $(html).find(`tr:nth-child(1) td:nth-child(${j})`).text();
+                    if (name.length > 0) {
+                        if (name == '比分') break;
+                        names.push(name);
+                    }
+                }
+                return names;
+            }
+
+            allNames = getCompanyNames();
+
+            let needCompanyIndex = [];
+            for (let i = 0; i < needCompany.length; i++) {
+                const company = needCompany[i];
+                let c_index = allNames.indexOf(company) + 1;
+                if (c_index > 0) needCompanyIndex.push(c_index);
+            }
+            console.log(needCompanyIndex);
+            for (let i = tb.length; i > 0; i--) {
+                let date = $(html).find(`tr:nth-child(${i}) td:nth-child(14)`).html();
+                let score = $(html).find(`tr:nth-child(${i}) td:nth-child(13)`).text();
+                if (score.length > 0) break;
+                for (let j = 1; j <= cols; j++) {
+                    if (needCompanyIndex.indexOf(j) < 0) continue;
+                    var td = $(html).find(`tr:nth-child(${i}) td:nth-child(${j})`)
+                    if (td.text().length > 0) {
+                        var d = getDetail(td, score, date);
+                        if (d)
+                            handleOdds(j, d);
+                    }
+                }
+                console.log(`读取${i}`);
+            }
+            callback(allNames, all_odds);
+        }
+
 
         function getData () {
             showEuChart();
@@ -244,22 +553,6 @@
                 }
                 tooltip_data[time] = odds;
                 return odds;
-            }
-
-            function dateCompare (date1, date2, toType = 'ss') {
-                if (typeof date1 == "string") {
-                    date1 = new Date(date1);
-                }
-                if (typeof date2 == "string") {
-                    date2 = new Date(date2);
-                }
-                let dert = Math.abs(date1.getTime() - date2.getTime());
-                let ss = Math.floor(dert / 1000);
-                let compare = ss;
-                if (toType === 'mm') {
-                    compare = ss / 60;
-                }
-                return compare;
             }
 
             function handlerData (company) {
