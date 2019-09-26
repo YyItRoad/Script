@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         time_diff
 // @namespace    http://boc.ink/
-// @version      0.4.2
+// @version      0.4.3
 // @description  try to take over the world!
 // @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
@@ -419,14 +419,8 @@ Odds.prototype.getOdd = function (home) {
             var all_odds = {};
             var allNames;
 
-            let htmlText = $('#oddsDetail')[0].outerHTML;
-
-            let html = $.parseHTML(htmlText);
-            var tb = $(html).find('tr');
-            var cols = $(html).find('tr:nth-child(1) td').length;
-
             function handleOdds (index, odds) {
-                let name = allNames[index - 1];
+                let name = allNames[index];
                 if (name) {
                     let os = all_odds[name] || [];
                     os.push(odds);
@@ -434,21 +428,14 @@ Odds.prototype.getOdd = function (home) {
                 }
             }
 
-            function getDetail (element, score, date) {
-                let datas = $(element).html().split('<br>');
-                if (datas.length > 0) {
-                    let f3 = $(element).find('span.f3').text();
-                    let f2 = $(element).find('span.f2').text();
-                    let h = datas[0];
-                    if (f3.length > 0)
-                        return new Odds({ home: f3, away: f2, date: date.replace('<br>', ' '), handicap: h, state: score.length > 0 });
-                }
-            }
+            let ods = document.getElementById('oddsDetail');
+            let trs = ods.getElementsByTagName('tr');
+            let tds = trs.item(0).getElementsByTagName('td');
 
             function getCompanyNames () {
                 let names = []
-                for (let j = 1; j <= cols; j++) {
-                    var name = $(html).find(`tr:nth-child(1) td:nth-child(${j})`).text();
+                for (let j = 0; j < tds.length - 1; j++) {
+                    var name = tds[j].innerText;
                     if (name.length > 0) {
                         if (name == '比分') break;
                         names.push(name);
@@ -462,13 +449,16 @@ Odds.prototype.getOdd = function (home) {
             let needCompanyIndex = [];
             for (let i = 0; i < needCompany.length; i++) {
                 const company = needCompany[i];
-                let c_index = allNames.indexOf(company) + 1;
-                if (c_index > 0) needCompanyIndex.push(c_index);
+                let c_index = allNames.indexOf(company);
+                if (c_index >= 0) needCompanyIndex.push(c_index);
             }
             let last_date;
-            for (let i = tb.length; i > 0; i--) {
-                let date = $(html).find(`tr:nth-child(${i}) td:nth-child(14)`).html();
-                let score = $(html).find(`tr:nth-child(${i}) td:nth-child(13)`).text();
+            for (let i = trs.length - 1; i >= 0; i--) {
+                let tr = trs[i];
+                let tds = tr.getElementsByTagName('td');
+                if (tds.length <= 0) continue;
+                let date = tds[tds.length - 1].innerHTML;
+                let score = tds[tds.length - 2].innerHTML;
                 if (score.length > 0) {
                     if (score.indexOf('-') > 0) {
                         last_date = date;
@@ -477,19 +467,23 @@ Odds.prototype.getOdd = function (home) {
                     break;
                 };
                 last_date = date;
-                for (let j = 1; j <= cols; j++) {
+                for (let j = 0; j < tds.length - 1; j++) {
                     if (needCompanyIndex.indexOf(j) < 0) continue;
-                    var td = $(html).find(`tr:nth-child(${i}) td:nth-child(${j})`)
-                    if (td.text().length > 0) {
-                        var d = getDetail(td, score, date);
-                        if (d)
-                            handleOdds(j, d);
+                    const td = tds[j];
+                    let datas = td.innerHTML.split('<br>');
+                    if (datas.length > 1) {
+                        let f3s = td.getElementsByClassName('f3').item(0).textContent;
+                        let f2s = td.getElementsByClassName('f2').item(0).textContent;
+                        let h = datas[0];
+                        if (f3s && f3s.length > 0) {
+                            let odd = new Odds({ home: f3s, away: f2s, date: date.replace('<br>', ' '), handicap: h, state: score.length > 0 })
+                            handleOdds(j, odd);
+                        }
                     }
                 }
             }
             callback(allNames, all_odds);
         }
-
 
         function getData () {
             showEuChart();
