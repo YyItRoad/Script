@@ -218,7 +218,7 @@ Odds.prototype.getOdd = function (home) {
         var tds = $('#odds > table tr td.font12');
         let last_date, first_kl1, first_kl2, first_kl3;
         function diffKl (kl1, kl2) {
-            return parseFloat(kl1) * 100 - parseFloat(kl2) * 100
+            return parseInt(parseFloat(kl1) * 100 - parseFloat(kl2) * 100);
         }
         for (var i = 0; i < tds.length; i++) {
             if (i == 0 || i == tds.length - 1) {
