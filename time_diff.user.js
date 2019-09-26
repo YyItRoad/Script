@@ -216,8 +216,24 @@ Odds.prototype.getOdd = function (home) {
     function handleHistory () {
         console.log('handleHistory');
         var tds = $('#odds > table tr td.font12');
-        let last_date;
+        let last_date, first_kl1, first_kl2, first_kl3;
+        function diffKl (kl1, kl2) {
+            return parseFloat(kl1) * 100 - parseFloat(kl2) * 100
+        }
         for (var i = 0; i < tds.length; i++) {
+            if (i == 0 || i == tds.length - 1) {
+                var pre3 = $(tds[i]).prev()[0];
+                var pre2 = $(pre3).prev()[0];
+                var pre1 = $(pre2).prev()[0];
+                console.log(pre1.textContent, pre2.textContent, pre3.textContent);
+                if (i == 0) {
+                    first_kl1 = pre1; first_kl2 = pre2; first_kl3 = pre3;
+                } else {
+                    $(first_kl1).text(first_kl1.textContent + '|' + diffKl(first_kl1.textContent, pre1.textContent));
+                    $(first_kl2).text(first_kl2.textContent + '|' + diffKl(first_kl2.textContent, pre2.textContent));
+                    $(first_kl3).text(first_kl3.textContent + '|' + diffKl(first_kl3.textContent, pre3.textContent));
+                }
+            }
             var date = textToDate($(tds[i]).text().replace('(初盘)', ''));
             if (last_date) {
                 $(tds[i - 1]).text($(tds[i - 1]).text() + " [" + diffMinutes(date, last_date) + ']');
