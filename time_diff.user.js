@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         time_diff
 // @namespace    http://boc.ink/
-// @version      0.4.4
+// @version      0.4.5
 // @description  try to take over the world!
 // @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
@@ -416,6 +416,8 @@ Odds.prototype.getOdd = function (home) {
                     yAxis: [{
                         type: 'value',
                         scale: true,
+                        min: 0.6,
+                        max: 1.2,
                     }],
                     series: series,
                     axisPointer: {
