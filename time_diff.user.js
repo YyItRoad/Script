@@ -209,8 +209,8 @@ Odds.prototype.getOdd = function (home = true) {
         var key = getQueryString('key') || localStorage.getItem('url_key');
         if (key) {
             localStorage.setItem('url_key', key);
-            showChart(key);
         }
+        showChart(key);
     }
 
     function handleHistory () {
