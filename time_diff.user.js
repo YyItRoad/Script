@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         time_diff
 // @namespace    http://boc.ink/
-// @version      0.4.5
+// @version      0.4.6
 // @description  try to take over the world!
 // @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
@@ -283,7 +283,9 @@ Odds.prototype.getOdd = function (home) {
         var content = heredoc(function () {/*
             <div id='oddsChart' style="width:100%;padding-top:10px"></div>
             <div id='euchart' style="width:100%;padding-top:10px"></div>
-            <button id='lineType' style="position:absolute;top: 10px;left:10px;"></button>
+            <div id='others' style="position:absolute;top: 10px;left:10px;">
+            <button id='lineType'>主队</button>
+            </div>
             */});
         $('#MiddleAd').height('100%');
         $('#MiddleAd').css('padding', '20px 0');
@@ -301,6 +303,7 @@ Odds.prototype.getOdd = function (home) {
             var odds_legend_selected = JSON.parse(localStorage.getItem('odds_legend_selected'));
             var tooltip_datas = {};
             var oddsChart;
+            var statistics = {};
 
             $('#oddsChart').height('500px');
             oddsChart = echarts.init(document.getElementById('oddsChart'));
@@ -354,6 +357,7 @@ Odds.prototype.getOdd = function (home) {
 
                 var legend = [];
                 var series = [];
+                var diff_handicaps = [];
 
                 for (let i = 0; i < needCompany.length; i++) {
                     const name = needCompany[i];
@@ -361,17 +365,21 @@ Odds.prototype.getOdd = function (home) {
                     let c_odds = all_odds[name] || [];
 
                     let c_data = [];
+                    let last_handicap;
+                    let diff_handicap = 0;
                     for (let j = 0; j < c_odds.length; j++) {
                         const c_odd = c_odds[j];
+                        if (c_odd.handicap != last_handicap) { diff_handicap++; last_handicap = c_odd.handicap };
                         c_data.push(c_odd.getData());
                     }
+                    if (diff_handicap != 0) diff_handicaps.push(`${name}:${diff_handicap}`);
                     series.push({
                         type: 'line',
                         data: c_data,
                         name,
                     });
                 }
-
+                statistics['diff_handicap'] = diff_handicaps;
                 var option = {
                     tooltip: {
                         trigger: 'axis',
@@ -430,6 +438,16 @@ Odds.prototype.getOdd = function (home) {
             }
 
             loadOddsChart();
+            //变盘次数
+            let diff_handicaps = statistics['diff_handicap'];
+            if (diff_handicaps.length != 0) {
+                var diff_handicap_str = '变盘: ';
+                for (let i = 0; i < diff_handicaps.length; i++) {
+                    const diff_handicap = diff_handicaps[i];
+                    diff_handicap_str += diff_handicap;
+                }
+                $('#others').text(diff_handicap_str);
+            }
         }
 
         function getOddsData (callback) {
