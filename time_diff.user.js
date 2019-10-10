@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         time_diff
 // @namespace    http://boc.ink/
-// @version      0.4.6
+// @version      0.4.7
 // @description  try to take over the world!
 // @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
@@ -88,12 +88,12 @@ var Odds = function ({ home, away, date, handicap, state }) {
     this.state = state;
 }
 
-Odds.prototype.getData = function (home) {
-    return [this.date, this.home];
+Odds.prototype.getData = function (home = true) {
+    return [this.date, this.getOdd(home)];
 };
 
-Odds.prototype.getOdd = function (home) {
-    return this.home;
+Odds.prototype.getOdd = function (home = true) {
+    return home ? this.home : this.away;
 };
 
 ; (function () {
@@ -277,14 +277,14 @@ Odds.prototype.getOdd = function (home) {
         }
         var myChart;
         var gameData;
-        var lineType = localStorage.getItem('lineType') || '上盘';
+        var lineType = localStorage.getItem('lineType') || '主队';
         var tooltip_data = {};
         var legend_selected = JSON.parse(localStorage.getItem('legend_selected'));
         var content = heredoc(function () {/*
             <div id='oddsChart' style="width:100%;padding-top:10px"></div>
             <div id='euchart' style="width:100%;padding-top:10px"></div>
             <div id='others' style="position:absolute;top: 10px;left:10px;">
-            <button id='lineType'>主队</button>
+            <button id='lineType'></button>
             </div>
             */});
         $('#MiddleAd').height('100%');
@@ -312,7 +312,7 @@ Odds.prototype.getOdd = function (home) {
                 localStorage.setItem('odds_legend_selected', JSON.stringify(params.selected));
             });
 
-            function loadOddsChart () {
+            function loadOddsChart (t_home = true) {
 
                 function getCutOdds (time) {
                     let allCutOdds;
@@ -349,7 +349,7 @@ Odds.prototype.getOdd = function (home) {
                         let c_odds = allCutOdds[c_name];
                         let selected = odds_legend_selected == null || odds_legend_selected[c_name];
                         if (c_odds && selected) {
-                            cutOdds.push(`${c_name}: [${c_odds.handicap}]${c_odds.getOdd()}`);
+                            cutOdds.push(`${c_name}: [${c_odds.handicap}]${c_odds.getOdd(t_home)}`);
                         }
                     }
                     return cutOdds;
@@ -370,7 +370,7 @@ Odds.prototype.getOdd = function (home) {
                     for (let j = 0; j < c_odds.length; j++) {
                         const c_odd = c_odds[j];
                         if (c_odd.handicap != last_handicap) { diff_handicap++; last_handicap = c_odd.handicap };
-                        c_data.push(c_odd.getData());
+                        c_data.push(c_odd.getData(t_home));
                     }
                     if (diff_handicap != 0) diff_handicaps.push(`${name}:${diff_handicap}`);
                     series.push({
@@ -436,8 +436,14 @@ Odds.prototype.getOdd = function (home) {
                 };
                 oddsChart.setOption(option);
             }
-
-            loadOddsChart();
+            $('#lineType').text(lineType);
+            loadOddsChart(lineType === '主队');
+            $('#lineType').click(function () {
+                lineType = lineType === '主队' ? '客队' : '主队';
+                $(this).text(lineType);
+                localStorage.setItem('lineType', lineType);
+                loadOddsChart(lineType === '主队');
+            });
             //变盘次数
             let diff_handicaps = statistics['diff_handicap'];
             if (diff_handicaps.length != 0) {
@@ -446,7 +452,7 @@ Odds.prototype.getOdd = function (home) {
                     const diff_handicap = diff_handicaps[i];
                     diff_handicap_str += diff_handicap;
                 }
-                $('#others').text(diff_handicap_str);
+                $('#others').append(diff_handicap_str);
             }
         }
 
