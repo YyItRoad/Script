@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         time_diff
 // @namespace    http://boc.ink/
-// @version      0.4.8
+// @version      0.5
 // @description  try to take over the world!
 // @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
@@ -15,7 +15,8 @@
 // ==/UserScript==
 var now_year = new Date().getFullYear();
 var now_month = new Date().getMonth() + 1;
-let needCompany = ['澳门', '易胜', '利记'];
+const company_names = ['澳门', '易胜博', '利记', '明陞', '12bet', 'Crown', '金宝博', '盈禾', '韦德', '平博', 'Bet365', '10BET', '18Bet', '立博'];
+const needCompany = ['澳门', '易胜', '利记'];
 function handicapToPoints (handicap) {
     let opposite = false;
     if (handicap.indexOf('受让') == 0) {
@@ -173,8 +174,6 @@ Odds.prototype.getOdd = function (home = true) {
             $(date_sel).text(date_str + ' | ' + diff_begin);
         }
     }
-
-    const company_names = ['澳门', '易胜博', '利记', '明陞', '12bet', 'Crown', '金宝博', '盈禾', '韦德', '平博', 'Bet365', '10BET', '18Bet'];
 
     function handleCompany () {
         console.log('handleCompany');
