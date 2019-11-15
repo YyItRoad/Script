@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         time_diff
 // @namespace    http://boc.ink/
-// @version      0.4.7
+// @version      0.4.8
 // @description  try to take over the world!
 // @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
@@ -193,7 +193,9 @@ Odds.prototype.getOdd = function (home = true) {
                 last_array.push(trs[i]);
             }
         }
-        let all_companies = company_names.concat(diffArray(Object.keys(companies), company_names));
+        let all_companies = Object.keys(companies).sort(function (a, b) {
+            return company_names.indexOf(a) - company_names.indexOf(b);
+        });
         let first_td;
         for (let j = 0; j < all_companies.length; j++) {
             let htmls = companies[all_companies[j]];
