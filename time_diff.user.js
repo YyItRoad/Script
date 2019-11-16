@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         time_diff
 // @namespace    http://boc.ink/
-// @version      0.5
+// @version      0.5.1
 // @description  try to take over the world!
 // @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
@@ -11,6 +11,7 @@
 // @match        *://vip.win0168.com/1x2/OddsHistory.aspx*
 // @require      https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js
+// @require      https://cdn.bootcss.com/echarts/4.4.0-rc.1/echarts.min.js
 // @grant        none
 // ==/UserScript==
 var now_year = new Date().getFullYear();
@@ -255,7 +256,7 @@ Odds.prototype.getOdd = function (home = true) {
             return fn.toString().split('\n').slice(1, -1).join('\n') + '\n'
         }
 
-        $.getScript('http://raw.githack.com/YyItRoad/Script/master/echarts.min.js', showAllChart);
+        // $.getScript('http://raw.githack.com/YyItRoad/Script/master/echarts.min.js', showAllChart);
 
         const need_companies = [1, 3, 12, 17, 24, 23, 31, 35];
         const chart_color = ['#c23531', '#2f4554', '#61a0a8', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3'];
@@ -298,6 +299,8 @@ Odds.prototype.getOdd = function (home = true) {
             //showEuChart();
             getOddsData(showOddsChart);
         }
+
+        showAllChart();
 
         function showOddsChart (allNames, all_odds) {
             console.log('showOddsChart', allNames);
