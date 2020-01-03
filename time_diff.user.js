@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         time_diff
 // @namespace    http://boc.ink/
-// @version      0.5.1
+// @version      0.5.2
 // @description  try to take over the world!
 // @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
@@ -79,6 +79,8 @@ function getTime (date) {
     let year = now_year;
     if (now_month == 12 && month <= 3) {
         year++;
+    } else if(now_month == 1 && month > 10) {
+        year--;
     }
     return new Date(`${year}-${date}`);
 }
