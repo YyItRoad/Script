@@ -79,7 +79,7 @@ function getTime (date) {
     let year = now_year;
     if (now_month == 12 && month <= 3) {
         year++;
-    } else if(now_month == 1 && month > 10) {
+    } else if (now_month == 1 && month > 10) {
         year--;
     }
     return new Date(`${year}-${date}`);
