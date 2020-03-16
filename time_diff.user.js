@@ -196,7 +196,11 @@ Odds.prototype.getOdd = function (home = true) {
             }
         }
         let all_companies = Object.keys(companies).sort(function (a, b) {
-            return company_names.indexOf(a) - company_names.indexOf(b);
+            let index1 = company_names.indexOf(a);
+            let index2 = company_names.indexOf(b);
+            if (index1 == -1) index1 = 99;
+            if (index2 == -1) index2 = 99;
+            return index1 - index2;
         });
         let first_td;
         for (let j = 0; j < all_companies.length; j++) {
