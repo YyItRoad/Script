@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         time_diff
 // @namespace    http://boc.ink/
-// @version      0.5.2
+// @version      0.6.0
 // @description  try to take over the world!
 // @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
@@ -74,6 +74,13 @@ function handicapToPoints (handicap) {
     return point;
 }
 
+function getQueryString (name, r) {
+    if (r == undefined) r = window.location.search.substr(1)
+    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+    let res = r.match(reg);
+    if (res != null) return unescape(res[2]); return null;
+}
+
 function getTime (date) {
     let month = date.split('-')[0];
     let year = now_year;
@@ -99,6 +106,61 @@ Odds.prototype.getData = function (home = true) {
 Odds.prototype.getOdd = function (home = true) {
     return home ? this.home : this.away;
 };
+
+/// 解析比赛头部信息
+function getHeaderInfo (odds) {
+    let homeName = $('.header .home a').text().trim().split(/\s+/)[0];
+    let guestName = $('.header .guest a').text().trim().split(/\s+/)[0];
+    let vsInfo = $('.header .vs .row').first().text().trim().split(/\s+/);
+    let leagueName = vsInfo[0], startDate = vsInfo[1], startTime = vsInfo[2];
+    let scoreInfo = $('#headVs').text().trim().split(/\s+/);
+    let scoreHome = scoreInfo[0], scoreGuest = scoreInfo[3], matchStatus = scoreInfo[1];
+
+    let href = $('#tabs a').first().attr('href');
+    let matchId = getQueryString('id', href.substr(1));
+    function add (a, b) {
+        return (parseFloat(a) + parseFloat(b)).toFixed(2)
+    }
+    let data = [startDate, startTime, matchId, leagueName, homeName, guestName, add(odds[0], odds[2]), odds[0], odds[1], odds[2], add(odds[3], odds[5]), odds[3], odds[4], odds[5], scoreHome, scoreGuest].join(' ');
+    console.log(data, matchStatus);
+    $('#dataPanel').text(data);
+}
+
+/// 获取公司水位信息
+function getOddsInfo (tds) {
+    let needIndexs = [2, 3, 4, 8, 9, 10];
+    let datas = [];
+    for (var i = 0; i < tds.length; i++) {
+        let td = $(tds[i]);
+        if (i == 0) name = td.text().trim();
+        if (needIndexs.includes(i)) {
+            if (i == 3 || i == 9) {
+                datas.push(td.attr('goals'));
+            } else {
+                datas.push(td.text());
+            }
+        }
+    }
+    getHeaderInfo(datas);
+}
+
+function insertContent () {
+    function heredoc (fn) {
+        return fn.toString().split('\n').slice(1, -1).join('\n') + '\n'
+    }
+    var content = heredoc(function () {/*
+        <div id='dataPanel' style="position:absolute;top: 10px;right:10px;"></div>
+        <div id='oddsChart' style="width:100%;padding-top:10px"></div>
+        <div id='euchart' style="width:100%;padding-top:10px"></div>
+        <div id='others' style="position:absolute;top: 10px;left:10px;">
+        <button id='lineType'></button>
+        </div>
+        */});
+    $('#MiddleAd').height('100%');
+    $('#MiddleAd').css('padding', '20px 0');
+    $('#MiddleAd').append(content);
+    $('#MiddleAd').css('position', 'relative');
+}
 
 ; (function () {
     'use strict';
@@ -180,11 +242,15 @@ Odds.prototype.getOdd = function (home = true) {
 
     function handleCompany () {
         console.log('handleCompany');
+        //注入UI
+        insertContent();
         var companies = {};
         var trs = $('#odds tr');
         let last_name, last_array;
         for (var i = 2; i < trs.length; i++) {
-            let name = $(trs[i]).find('td').first().text().trim();
+            let ctds = $(trs[i]).find('td');
+            let name = ctds.first().text().trim();
+            if (name == '澳门') getOddsInfo(ctds);
             if (name.startsWith('最')) continue;
             if (name.length > 0 && name !== last_name) {
                 last_name = name;
@@ -250,20 +316,7 @@ Odds.prototype.getOdd = function (home = true) {
         }
     }
 
-    function getQueryString (name) {
-        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
-        var r = window.location.search.substr(1).match(reg);
-        if (r != null) return unescape(r[2]); return null;
-    }
-
     function showChart (key) {
-
-        function heredoc (fn) {
-            return fn.toString().split('\n').slice(1, -1).join('\n') + '\n'
-        }
-
-        // $.getScript('http://raw.githack.com/YyItRoad/Script/master/echarts.min.js', showAllChart);
-
         const need_companies = [1, 3, 12, 17, 24, 23, 31, 35];
         const chart_color = ['#c23531', '#2f4554', '#61a0a8', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3'];
         const company_ids = {
@@ -288,21 +341,9 @@ Odds.prototype.getOdd = function (home = true) {
         var lineType = localStorage.getItem('lineType') || '主队';
         var tooltip_data = {};
         var legend_selected = JSON.parse(localStorage.getItem('legend_selected'));
-        var content = heredoc(function () {/*
-            <div id='oddsChart' style="width:100%;padding-top:10px"></div>
-            <div id='euchart' style="width:100%;padding-top:10px"></div>
-            <div id='others' style="position:absolute;top: 10px;left:10px;">
-            <button id='lineType'></button>
-            </div>
-            */});
-        $('#MiddleAd').height('100%');
-        $('#MiddleAd').css('padding', '20px 0');
-        $('#MiddleAd').append(content);
-        $('#MiddleAd').css('position', 'relative');
 
         function showAllChart () {
             console.log('showAllChart');
-            //showEuChart();
             getOddsData(showOddsChart);
         }
 
@@ -535,32 +576,6 @@ Odds.prototype.getOdd = function (home = true) {
                 }
             }
             callback(allNames, all_odds);
-        }
-
-        function getData () {
-            showEuChart();
-            $.ajax({
-                type: "get",
-                url: `https://boc.ink/v1/game/targets?key=${key}&fun=detail&id=${getQueryString('id')}`,
-                success: function (res) {
-                    console.log(res);
-                    if (res.data) {
-                        $('#chart').height('500px');
-                        myChart = echarts.init(document.getElementById('chart'));
-                        myChart.on('legendselectchanged', function (params) {
-                            localStorage.setItem('legend_selected', JSON.stringify(params.selected));
-                        });
-                        loadChart(res.data);
-                        $('#lineType').text(lineType);
-                        $('#lineType').click(function () {
-                            lineType = lineType === '上盘' ? '主队' : '上盘';
-                            $(this).text(lineType);
-                            localStorage.setItem('lineType', lineType);
-                            loadChart(gameData);
-                        });
-                    }
-                }
-            });
         }
 
         function loadChart (all_datas) {
@@ -802,7 +817,9 @@ Odds.prototype.getOdd = function (home = true) {
 
     }
 
+    //处理水位详情
     if (location.pathname.startsWith('/changeDetail')) handleOdds();
+    //处理公司位置
     if (location.pathname.startsWith('/AsianOdds_n')) handleCompany();
     if (location.pathname.indexOf('OddsHistory') > 0) handleHistory();
 
