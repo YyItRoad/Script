@@ -149,7 +149,7 @@ function insertContent () {
         return fn.toString().split('\n').slice(1, -1).join('\n') + '\n'
     }
     var content = heredoc(function () {/*
-        <div id='dataPanel' style="position:absolute;top: 10px;right:10px;"></div>
+        <div id='dataPanel' style="position:absolute;top: 0px;right:10px;"></div>
         <div id='oddsChart' style="width:100%;padding-top:10px"></div>
         <div id='euchart' style="width:100%;padding-top:10px"></div>
         <div id='others' style="position:absolute;top: 10px;left:10px;">
