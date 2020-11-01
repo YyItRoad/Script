@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         time_diff
 // @namespace    http://boc.ink/
-// @version      0.6.0
+// @version      0.6.1
 // @description  try to take over the world!
 // @author       YY
 // @match        *://vip.win007.com/changeDetail/handicap.aspx*
@@ -74,6 +74,16 @@ function handicapToPoints (handicap) {
     return point;
 }
 
+/// 复制内容到剪切板
+function copyToClip(content) {
+    var aux = document.createElement("input");
+    aux.setAttribute("value", content);
+    document.body.appendChild(aux);
+    aux.select();
+    document.execCommand("copy");
+    document.body.removeChild(aux);
+}
+
 function getQueryString (name, r) {
     if (r == undefined) r = window.location.search.substr(1)
     var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
@@ -121,9 +131,12 @@ function getHeaderInfo (odds) {
     function add (a, b) {
         return (parseFloat(a) + parseFloat(b)).toFixed(2)
     }
-    let data = [startDate, startTime, matchId, leagueName, homeName, guestName, add(odds[0], odds[2]), odds[0], odds[1], odds[2], add(odds[3], odds[5]), odds[3], odds[4], odds[5], scoreHome, scoreGuest].join(' ');
+    let data = [startDate, startTime, matchId, leagueName, homeName, guestName, add(odds[0], odds[2]), odds[0], odds[1], odds[2], add(odds[3], odds[5]), odds[3], odds[4], odds[5], scoreHome, scoreGuest];
     console.log(data, matchStatus);
-    $('#dataPanel').text(data);
+    $('#dataPanel').text(data.join(' '));
+    data.shift();
+    let copyBtn = $('<button> Copy </button>').click(()=>copyToClip(data.join(' ')));
+    $('#dataPanel').append(copyBtn);
 }
 
 /// 获取公司水位信息
@@ -149,7 +162,7 @@ function insertContent () {
         return fn.toString().split('\n').slice(1, -1).join('\n') + '\n'
     }
     var content = heredoc(function () {/*
-        <div id='dataPanel' style="position:absolute;top: 10px;right:10px;"></div>
+        <div id='dataPanel' style="position:absolute;top: 0px;right:10px;"></div>
         <div id='oddsChart' style="width:100%;padding-top:10px"></div>
         <div id='euchart' style="width:100%;padding-top:10px"></div>
         <div id='others' style="position:absolute;top: 10px;left:10px;">
